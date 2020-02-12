@@ -73,6 +73,31 @@ def get_song(url):
     return song
 
 
+def list_musical_styles(url):
+    html = urlopen(f"{url}/estilos/")
+    bs = BeautifulSoup(html, 'html.parser')
+    title_content = bs.find('h1', {'class': 'h2'})
+    title = ' '.join(title_content.stripped_strings)
+
+    ctrl_page = set()
+    musical_styles = []
+    musical_styles_content = bs.find('ul', {'class': 'cnt-list cnt-list--col2'}).find_all('a')
+    for musical_style_content in musical_styles_content:
+        if 'href' in musical_style_content.attrs:
+            if musical_style_content.attrs['href'] not in ctrl_page:
+                ctrl_page.add(f"{musical_style_content.attrs['href']}")
+                style = {
+                    "description": ' '.join(musical_style_content.stripped_strings),
+                    "link": f"{musical_style_content.attrs['href']}"
+                }
+                musical_styles.append(style)
+
+    return {
+        "title": title,
+        "styles": musical_styles
+    }
+
+
 def save(data):
 
     try:
@@ -83,14 +108,41 @@ def save(data):
 
 
 if __name__ == "__main__":
-    # TODO obter lista de artistas por estilo musical ou letra 
-    artist_name = 'caetano-veloso'
     # TODO mover para um arquivo de configuração
     url = 'https://www.letras.mus.br'
 
+    print("Escolha um dos estilos musicais abaixo para baixar letras das músicas:")
+
+    musical_styles = list_musical_styles(url)
+    index = 0
+    print(musical_styles["title"])
+    print(f"{index} - Todos")
+    for style in musical_styles["styles"]:
+        index = index + 1
+        description = style["description"]
+        print(f"{index} - {description}")
+
+    try:
+        option = int(input('Opção: '))
+    except (ValueError, IndexError):
+        print("Opção Inválida")
+
+    chosen_styles = []
+    if option == 0:
+        chosen_styles = musical_styles["styles"]
+    else:
+        chosen_styles.append(musical_styles["styles"][option - 1])
+
+    print(chosen_styles)
+
+    exit(1)
+
+    # TODO obter lista de artistas por estilo musical ou letra 
+    artist_name = 'caetano-veloso'
+
     artist = {
         "name": artist_name,
-        "url": f"{url}/{artist_name}"
+        "url": f"{url}/{artist_name}",
         "scraping_date": date.today()
     }
 
@@ -101,3 +153,6 @@ if __name__ == "__main__":
 
     artist.update({"songs": songs})
     save(artist)
+
+# https://www.letras.mus.br/estilos/mpb/artistas.html
+# https://www.letras.mus.br/mais-acessadas/mpb/
