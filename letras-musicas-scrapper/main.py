@@ -1,6 +1,7 @@
 # _*_ coding:utf-8 _*_
 
 import string
+import os
 import sys
 from urllib.request import urlopen
 import json
@@ -8,18 +9,23 @@ from bs4 import BeautifulSoup
 from datetime import date
 
 
-def get_links(url):
+def get_song_links(url):
 
     try:
         links = []
         ctrl_page = set()
         html = urlopen(url)
         bs = BeautifulSoup(html, 'html.parser')
-        for link in bs.find('ul', {'class': 'cnt-list-songs'}).find_all('a'):
+        links_content = bs.find('ul', {'class': 'cnt-list-songs'}).find_all('a')
+
+        for link in links_content:
             if 'href' in link.attrs:
                 if link.attrs['href'] not in ctrl_page:
                     ctrl_page.add(f"{link.attrs['href']}")
-                    links.append(link.attrs['href'])
+                    links.append({
+                        "name": ' '.join(link.stripped_strings),
+                        "link": link.attrs['href']
+                    })
         return links
     except Exception as e:
         print(f'Ocorreu algum erro ao tentar acessar o site. {e}')
@@ -73,11 +79,9 @@ def get_song(url):
     return song
 
 
-def list_musical_styles(url):
+def get_musical_styles(url):
     html = urlopen(f"{url}/estilos/")
     bs = BeautifulSoup(html, 'html.parser')
-    title_content = bs.find('h1', {'class': 'h2'})
-    title = ' '.join(title_content.stripped_strings)
 
     ctrl_page = set()
     musical_styles = []
@@ -92,17 +96,35 @@ def list_musical_styles(url):
                 }
                 musical_styles.append(style)
 
-    return {
-        "title": title,
-        "styles": musical_styles
-    }
+    return musical_styles
 
 
-def save(data):
+def get_artists(url):
+    html = urlopen(f"{url}todosartistas.html")
+    bs = BeautifulSoup(html, 'html.parser')
+
+    ctrl_page = set()
+    artists = []
+    artists_content = bs.find('ul', {'class': 'cnt-list cnt-list--col3'}).find_all('a')
+    for artist_content in artists_content:
+        if 'href' in artist_content.attrs:
+            if artist_content.attrs['href'] not in ctrl_page:
+                ctrl_page.add(f"{artist_content.attrs['href']}")
+                artist = {
+                    "name": ' '.join(artist_content.stripped_strings),
+                    "link": f"{artist_content.attrs['href']}"
+                }
+                artists.append(artist)
+    return artists
+
+
+def save(data, file_name):
 
     try:
-        with open('data.json', 'w') as outfile:
-            json.dump(data, outfile, indent=4).encode('utf8')
+        if not os.path.exists('lyrics'):
+            os.makedirs('lyrics')
+        with open(f"lyrics/{file_name}.json", 'w') as outfile:
+            json.dump(data, outfile, indent=4)
     except Exception as e:
         print(f'Ocorreu algum erro ao tentar gravar o arquivo. {e}')
 
@@ -113,11 +135,11 @@ if __name__ == "__main__":
 
     print("Escolha um dos estilos musicais abaixo para baixar letras das músicas:")
 
-    musical_styles = list_musical_styles(url)
+    musical_styles = get_musical_styles(url)
     index = 0
-    print(musical_styles["title"])
+    print("Estilos Musicais")
     print(f"{index} - Todos")
-    for style in musical_styles["styles"]:
+    for style in musical_styles:
         index = index + 1
         description = style["description"]
         print(f"{index} - {description}")
@@ -128,31 +150,91 @@ if __name__ == "__main__":
         print("Opção Inválida")
 
     chosen_styles = []
+    download_auto_mode = None
     if option == 0:
-        chosen_styles = musical_styles["styles"]
+        chosen_styles = musical_styles
+        print("0 - Informar quais artistas baixar")
+        print("1 - Baixar tudo sem interação")
+
+        try:
+            download_auto_mode = int(input('Opção: '))
+            assert download_auto_mode in (0, 1)
+        except (ValueError):
+            print("Opção Inválida")
     else:
-        chosen_styles.append(musical_styles["styles"][option - 1])
+        chosen_styles.append(musical_styles[option - 1])
 
-    print(chosen_styles)
+    chosen_artists = []
+    display = False
+    for style in chosen_styles:
+        style_description = style["description"]
+        style_url = style["link"]
+        artists = get_artists(f"{url}{style_url}")
 
-    exit(1)
+        print(f"Artistas do Estilo {style_description}")
+        if download_auto_mode == 1:
+            chosen_artists = chosen_artists + artists
+        else:
 
-    # TODO obter lista de artistas por estilo musical ou letra 
-    artist_name = 'caetano-veloso'
+            if display:
+                print("-" * -8)
+                print("0 - Continuar")
+                print("1 - Pular")
+                print("2 - Sair")
 
-    artist = {
-        "name": artist_name,
-        "url": f"{url}/{artist_name}",
-        "scraping_date": date.today()
-    }
+                try:
+                    option = int(input('Opção: '))
+                    assert option in (0, 1, 2)
+                    if option == 1:
+                        continue
+                    elif option == 2:
+                        break
+                    else:
+                        pass
+                except (ValueError, IndexError):
+                    print("Opção Inválida")
+            else:
+                display = True
 
-    songs = []
-    links = get_links(f"{url}/{artist_name}/mais_tocadas.html")
-    for link in links:
-        songs.append(get_song(f"{url}{link}"))
+            index = 0
+            print(f"{index} - Todos")
+            for artist in artists:
+                index = index + 1
+                artist_name = artist["name"]
+                print(f"{index} - {artist_name}")
 
-    artist.update({"songs": songs})
-    save(artist)
+            try:
+                option = int(input('Opção: '))
+            except (ValueError, IndexError):
+                print("Opção Inválida")
 
-# https://www.letras.mus.br/estilos/mpb/artistas.html
-# https://www.letras.mus.br/mais-acessadas/mpb/
+            if option == 0:
+                chosen_artists = chosen_artists + artists
+            else:
+                chosen_artists.append(artists[option - 1])
+
+    for chosen_artist in chosen_artists:
+
+        artist_name = chosen_artist["name"]
+        artist_link = chosen_artist["link"]
+
+        print(f"Músicas de {artist_name}")
+
+        artist = {
+            "name": artist_name,
+            "url": f"{url}{artist_link}",
+            "scraping_date": str(date.today())
+        }
+
+        songs = []
+        links = get_song_links(f"{url}/{artist_link}/mais_tocadas.html")
+        for link in links:
+            song_name = link["name"]
+            song_link = link["link"]
+
+            print(f"Obtendo letra da música {song_name}")
+            songs.append(get_song(f"{url}{song_link}"))
+
+        artist.update({"songs": songs})
+        save(artist, f"{artist_link[:-1][1:]}")
+
