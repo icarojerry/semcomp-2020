@@ -31,10 +31,12 @@ def get_song_links(url):
         print(f'Ocorreu algum erro ao tentar acessar o site. {e}')
 
 
-def get_artist(url):
-    # Obter views do artista
-    # Obter estilo musical associado ao artista
-    pass
+def get_artist_views(url):
+    html = urlopen(url)
+    bs = BeautifulSoup(html, 'html.parser')
+    views = bs.find('div', {'class': 'cnt-info_exib'}).find('b')
+
+    return ' '.join(views.stripped_strings)
 
 
 def get_song(url):
@@ -138,14 +140,19 @@ if __name__ == "__main__":
     musical_styles = get_musical_styles(url)
     index = 0
     print("Estilos Musicais")
-    print(f"{index} - Todos")
     for style in musical_styles:
+        if index == 0:
+            description = "Todos"
+        else:
+            description = style["description"]
+
+        description = description + (" " * (20-len(description)))
+        end = "\n" if (index + 1) % 5 == 0 else " "
+        print(f"{index:02d} - {description}\t|", end=end)
         index = index + 1
-        description = style["description"]
-        print(f"{index} - {description}")
 
     try:
-        option = int(input('Opção: '))
+        option = int(input('\nOpção: '))
     except (ValueError, IndexError):
         print("Opção Inválida")
 
@@ -220,9 +227,11 @@ if __name__ == "__main__":
 
         print(f"Músicas de {artist_name}")
 
+        artist_url = f"{url}{artist_link}"
         artist = {
             "name": artist_name,
-            "url": f"{url}{artist_link}",
+            "url": artist_url,
+            "views": get_artist_views(artist_url),
             "scraping_date": str(date.today())
         }
 
