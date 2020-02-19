@@ -36,12 +36,13 @@ def get_artist_views(url):
     bs = BeautifulSoup(html, 'html.parser')
     views = bs.find('div', {'class': 'cnt-info_exib'}).find('b')
 
-    return ' '.join(views.stripped_strings)
+    return int(' '.join(views.stripped_strings).replace(".", ""))
 
 
-def get_song(url):
+def get_song(url, song_link):
 
     try:
+        url = f"{url}{song_link}"
         song = {}
         html = urlopen(url)
         bs = BeautifulSoup(html, 'html.parser')
@@ -53,8 +54,13 @@ def get_song(url):
         views = int(views.replace('.', ''))
         genre = bs.find('div', {'class': 'breadcrumb cor_1 g-1'}).find_all('a')
         genre = ' '.join(genre[1].stripped_strings)
-        songwriter = bs.find('div', {'class': 'letra-info_comp'})
-        songwriter = ' '.join(songwriter.stripped_strings)
+        songwriters = bs.find('div', {'class': 'letra-info_comp'})
+        songwriters_ignore = songwriters.find('a')
+        songwriters_ignore = ' '.join(songwriters_ignore.stripped_strings)
+        songwriters = ' '.join(songwriters.stripped_strings)
+        songwriters = songwriters.replace("·", "").replace(" / ", "/").replace(songwriters_ignore, "")
+        songwriters = songwriters.replace("Composição: ", "").strip()
+        songwriters = None if songwriters == "" else songwriters.split("/")
         stanzas = bs.find('div', {'class': 'cnt-letra p402_premium'}).find_all('p')
 
         lyric_raw = ''
@@ -71,10 +77,51 @@ def get_song(url):
         song.update({"title": title})
         song.update({"views": views})
         song.update({"genre": genre})
-        song.update({"songwriter": songwriter})
+        song.update({"songwriters": songwriters})
         song.update({"lyric": lyric_raw})
         song.update({"lyric_pretty": stanzas_aux})
         song.update({"url": url})
+        song.update({"song_link": song_link})
+
+        translation = bs.find('a', {'class': 'lyric_event lm_lang lm_lang_pt'})
+        translation_pending = bs.find('a', {'class': 'lyric_event lm_lang lm_lang_pt js-send-translation'})
+
+        if not translation and not translation_pending:
+            song.update({"language": "pt_br"})
+        else:
+            song.update({"has_translation": not translation_pending})
+
+            if translation_pending:
+                translated_url = f"{url}enviar_traducao.html"
+                html = urlopen(translated_url)
+                bs = BeautifulSoup(html, 'html.parser')
+                language = bs.find('div', {'class': 'letra-menu'})
+                language = language.find('a')
+                language = language.attrs['class'][-1].split('_')[-1]
+                song.update({"language": language})
+            else:
+                translated_url = f"{url}traducao.html"
+                html = urlopen(translated_url)
+                bs = BeautifulSoup(html, 'html.parser')
+                language = bs.find('div', {'class': 'letra-menu'}).find('a')
+                language = language.attrs['class'][-1].split('_')[-1]
+                language = language.find('a')
+                song.update({"language": language})
+                stanzas = bs.find('div', {'class': 'cnt-trad_r'}).find_all('p')
+
+                lyric_raw = ''
+                stanzas_aux = []
+                for stanza in stanzas:
+                    lyric_raw += ' '.join(stanza.stripped_strings)
+                    lyric_raw += ' '
+                    verses_aux = []
+                    for verse in stanza.stripped_strings:
+                        verses_aux.append(verse)
+                    stanzas_aux.append(verses_aux)
+
+                song.update({"translated_lyric": lyric_raw})
+                song.update({"translated_lyric_pretty": stanzas_aux})
+                song.update({"translated_url": translated_url})
     except Exception as e:
         print(f'Ocorreu algum erro ao tentar acessar o site. {e}')
 
@@ -125,8 +172,8 @@ def save(data, file_name):
     try:
         if not os.path.exists('lyrics'):
             os.makedirs('lyrics')
-        with open(f"lyrics/{file_name}.json", 'w') as outfile:
-            json.dump(data, outfile, indent=4)
+        with open(f"lyrics/{file_name}.json", 'w', encoding='utf8') as outfile:
+            json.dump(data, outfile, indent=4, ensure_ascii=False)
     except Exception as e:
         print(f'Ocorreu algum erro ao tentar gravar o arquivo. {e}')
 
@@ -136,23 +183,23 @@ if __name__ == "__main__":
     url = 'https://www.letras.mus.br'
 
     print("Escolha um dos estilos musicais abaixo para baixar letras das músicas:")
+    print("\nEstilos Musicais")
 
     musical_styles = get_musical_styles(url)
     index = 0
-    print("Estilos Musicais")
+    description = "Todos"
+    description = description + (" " * (20-len(description)))
+    print(f"{index:02d} - {description}\t|", end=" ")
     for style in musical_styles:
-        if index == 0:
-            description = "Todos"
-        else:
-            description = style["description"]
-
+        index = index + 1
+        description = style["description"]
         description = description + (" " * (20-len(description)))
         end = "\n" if (index + 1) % 5 == 0 else " "
         print(f"{index:02d} - {description}\t|", end=end)
-        index = index + 1
 
     try:
-        option = int(input('\nOpção: '))
+        print("\n")
+        option = int(input('Opção: '))
     except (ValueError, IndexError):
         print("Opção Inválida")
 
@@ -164,6 +211,7 @@ if __name__ == "__main__":
         print("1 - Baixar tudo sem interação")
 
         try:
+            print("\n")
             download_auto_mode = int(input('Opção: '))
             assert download_auto_mode in (0, 1)
         except (ValueError):
@@ -171,25 +219,26 @@ if __name__ == "__main__":
     else:
         chosen_styles.append(musical_styles[option - 1])
 
-    chosen_artists = []
+    chosen_artists = {}
     display = False
     for style in chosen_styles:
         style_description = style["description"]
         style_url = style["link"]
-        artists = get_artists(f"{url}{style_url}")
+        print(f"\nArtistas do Estilo {style_description}")
 
-        print(f"Artistas do Estilo {style_description}")
+        artists = get_artists(f"{url}{style_url}")
         if download_auto_mode == 1:
-            chosen_artists = chosen_artists + artists
+            chosen_artists.update({style_url: {"description": style_description, "artists": artists}})
         else:
 
             if display:
-                print("-" * -8)
+                print("-" * 8)
                 print("0 - Continuar")
                 print("1 - Pular")
                 print("2 - Sair")
 
                 try:
+                    print("\n")
                     option = int(input('Opção: '))
                     assert option in (0, 1, 2)
                     if option == 1:
@@ -204,46 +253,57 @@ if __name__ == "__main__":
                 display = True
 
             index = 0
-            print(f"{index} - Todos")
+            artist_name = "Todos"
+            artist_name = artist_name + (" " * (20-len(artist_name)))
+            print(f"{index:02d} - {artist_name}\t|", end=" ")
             for artist in artists:
                 index = index + 1
                 artist_name = artist["name"]
-                print(f"{index} - {artist_name}")
+                artist_name = artist_name + (" " * (20-len(artist_name)))
+                end = "\n" if (index + 1) % 5 == 0 else " "
+                print(f"{index:02d} - {artist_name}\t|", end=end)
 
             try:
+                print("\n")
                 option = int(input('Opção: '))
             except (ValueError, IndexError):
                 print("Opção Inválida")
 
             if option == 0:
-                chosen_artists = chosen_artists + artists
+                chosen_artists.update({style_url: {"description": style_description, "artists": artists}})
             else:
-                chosen_artists.append(artists[option - 1])
+                if not chosen_artists.get(style_url):
+                    chosen_artists.update({style_url: {"description": style_description, "artists": []}})
 
-    for chosen_artist in chosen_artists:
+                artists_aux = chosen_artists.get(style_url).get("artists")
+                artists_aux.append(artists[option - 1])
+                chosen_artists.update({style_url: {"description": style_description, "artists": artists_aux}})
 
-        artist_name = chosen_artist["name"]
-        artist_link = chosen_artist["link"]
+    for style in chosen_artists:
+        chosen_artists_per_style = chosen_artists.get(style)["artists"]
+        style_description = chosen_artists.get(style)["description"]
+        for chosen_artist in chosen_artists_per_style:
+            artist_name = chosen_artist["name"]
+            artist_link = chosen_artist["link"]
+            artist_url = f"{url}{artist_link}"
+            print(f"\nMúsicas de {artist_name}")
 
-        print(f"Músicas de {artist_name}")
+            artist = {
+                "name": artist_name,
+                "url": artist_url,
+                "views": get_artist_views(artist_url),
+                "style": style_description,
+                "scraping_date": str(date.today())
+            }
 
-        artist_url = f"{url}{artist_link}"
-        artist = {
-            "name": artist_name,
-            "url": artist_url,
-            "views": get_artist_views(artist_url),
-            "scraping_date": str(date.today())
-        }
+            songs = []
+            links = get_song_links(f"{url}/{artist_link}/mais_tocadas.html")
+            for link in links:
+                song_name = link["name"]
+                song_link = link["link"]
 
-        songs = []
-        links = get_song_links(f"{url}/{artist_link}/mais_tocadas.html")
-        for link in links:
-            song_name = link["name"]
-            song_link = link["link"]
+                print(f"\t- Obtendo letra da música {song_name}")
+                songs.append(get_song(url, song_link))
 
-            print(f"Obtendo letra da música {song_name}")
-            songs.append(get_song(f"{url}{song_link}"))
-
-        artist.update({"songs": songs})
-        save(artist, f"{artist_link[:-1][1:]}")
-
+            artist.update({"songs": songs})
+            save(artist, f"{artist_link[:-1][1:]}")
