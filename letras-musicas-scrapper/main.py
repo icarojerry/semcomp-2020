@@ -16,7 +16,10 @@ def get_song_links(url):
         ctrl_page = set()
         html = urlopen(url)
         bs = BeautifulSoup(html, 'html.parser')
-        links_content = bs.find('ul', {'class': 'cnt-list-songs'}).find_all('a')
+        links_content = bs.find('ul', {'class': 'cnt-list-songs'})
+        if links_content is None:
+            links_content = bs.find('ul', {'class': 'cnt-list-songs -counter -top-songs js-song-list'})
+        links_content = links_content.find_all('a')
 
         for link in links_content:
             if 'href' in link.attrs:
@@ -89,24 +92,26 @@ def get_song(url, song_link):
         if not translation and not translation_pending:
             song.update({"language": "pt_br"})
         else:
+            translated_url = f"{url}enviar_traducao.html" if translation_pending else f"{url}traducao.html"
+            html = urlopen(translated_url)
+            bs = BeautifulSoup(html, 'html.parser')
+            try:
+                language = bs.find('div', {'class': 'letra-menu'})
+
+                if language is None:
+                    language = bs.find('div', {'class': 'letra-menu isFixedTop'})
+
+                language = language.find('a')
+                language = language.attrs['class']
+                language = language[-1].split('_')[-1]
+                song.update({"language": language})
+            except Exception as e:
+                song.update({"language": None})
+                print(f'Ocorreu algum erro ao tentar obter idioma da música. url:{translated_url} .{e}')
+
             song.update({"has_translation": not translation_pending})
 
-            if translation_pending:
-                translated_url = f"{url}enviar_traducao.html"
-                html = urlopen(translated_url)
-                bs = BeautifulSoup(html, 'html.parser')
-                language = bs.find('div', {'class': 'letra-menu'})
-                language = language.find('a')
-                language = language.attrs['class'][-1].split('_')[-1]
-                song.update({"language": language})
-            else:
-                translated_url = f"{url}traducao.html"
-                html = urlopen(translated_url)
-                bs = BeautifulSoup(html, 'html.parser')
-                language = bs.find('div', {'class': 'letra-menu'}).find('a')
-                language = language.attrs['class'][-1].split('_')[-1]
-                language = language.find('a')
-                song.update({"language": language})
+            if not translation_pending:
                 stanzas = bs.find('div', {'class': 'cnt-trad_r'}).find_all('p')
 
                 lyric_raw = ''
@@ -167,12 +172,13 @@ def get_artists(url):
     return artists
 
 
-def save(data, file_name):
+def file_exists(file_path):
+    return os.path.exists(file_path)
 
+
+def save(data, file_path):
     try:
-        if not os.path.exists('lyrics'):
-            os.makedirs('lyrics')
-        with open(f"lyrics/{file_name}.json", 'w', encoding='utf8') as outfile:
+        with open(file_path, 'w', encoding='utf8') as outfile:
             json.dump(data, outfile, indent=4, ensure_ascii=False)
     except Exception as e:
         print(f'Ocorreu algum erro ao tentar gravar o arquivo. {e}')
@@ -181,6 +187,9 @@ def save(data, file_name):
 if __name__ == "__main__":
     # TODO mover para um arquivo de configuração
     url = 'https://www.letras.mus.br'
+
+    if not os.path.exists('lyrics'):
+        os.makedirs('lyrics')
 
     print("Escolha um dos estilos musicais abaixo para baixar letras das músicas:")
     print("\nEstilos Musicais")
@@ -279,6 +288,7 @@ if __name__ == "__main__":
                 artists_aux.append(artists[option - 1])
                 chosen_artists.update({style_url: {"description": style_description, "artists": artists_aux}})
 
+    overwrite_option = None
     for style in chosen_artists:
         chosen_artists_per_style = chosen_artists.get(style)["artists"]
         style_description = chosen_artists.get(style)["description"]
@@ -286,7 +296,6 @@ if __name__ == "__main__":
             artist_name = chosen_artist["name"]
             artist_link = chosen_artist["link"]
             artist_url = f"{url}{artist_link}"
-            print(f"\nMúsicas de {artist_name}")
 
             artist = {
                 "name": artist_name,
@@ -297,7 +306,24 @@ if __name__ == "__main__":
             }
 
             songs = []
-            links = get_song_links(f"{url}/{artist_link}/mais_tocadas.html")
+            file_name = f"{artist_link[:-1][1:]}"
+            file_path = f"lyrics/{file_name}.json"
+
+            if overwrite_option is None:
+                print(f"Digite 1 para pular os arquivos já baixados")
+                overwrite_option = int(input('Opção: '))
+
+            if overwrite_option == 1 and file_exists(file_path):
+                print(f"\nMúsicas de {artist_name} já estão baixadas")
+                continue
+
+            links = None
+            tries = 0
+            while links is None and tries < 3:
+                links = get_song_links(f"{url}/{artist_link}/mais_tocadas.html")
+                tries = tries + 1
+
+            print(f"\nMúsicas de {artist_name}")
             for link in links:
                 song_name = link["name"]
                 song_link = link["link"]
@@ -306,4 +332,4 @@ if __name__ == "__main__":
                 songs.append(get_song(url, song_link))
 
             artist.update({"songs": songs})
-            save(artist, f"{artist_link[:-1][1:]}")
+            save(artist, file_path)
