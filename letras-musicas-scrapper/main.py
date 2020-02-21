@@ -8,6 +8,10 @@ import json
 from bs4 import BeautifulSoup
 from datetime import date
 
+## TODO: Adicionar cabeçalho nas consultas e torcar o urlopen por requests.get
+#headers = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'}
+#r = requests.get(url, headers=headers, timeout=5)
+
 
 def get_song_links(url):
 
@@ -37,9 +41,12 @@ def get_song_links(url):
 def get_artist_views(url):
     html = urlopen(url)
     bs = BeautifulSoup(html, 'html.parser')
-    views = bs.find('div', {'class': 'cnt-info_exib'}).find('b')
-
-    return int(' '.join(views.stripped_strings).replace(".", ""))
+    views = bs.find('div', {'class': 'cnt-info_exib'})
+    if views is None:
+        return None
+    else:
+        views = views.find('b')
+        return int(' '.join(views.stripped_strings).replace(".", ""))
 
 
 def get_song(url, song_link):
@@ -274,19 +281,23 @@ if __name__ == "__main__":
 
             try:
                 print("\n")
-                option = int(input('Opção: '))
+                option = input('Opção: ')
+                if not option:
+                    raise ValueError
+                option = list(map(lambda x: int(x), (option.replace(" ", "").split(";"))))
             except (ValueError, IndexError):
                 print("Opção Inválida")
 
-            if option == 0:
+            if option[0] == 0:
                 chosen_artists.update({style_url: {"description": style_description, "artists": artists}})
             else:
-                if not chosen_artists.get(style_url):
-                    chosen_artists.update({style_url: {"description": style_description, "artists": []}})
+                for op in option:
+                    if not chosen_artists.get(style_url):
+                        chosen_artists.update({style_url: {"description": style_description, "artists": []}})
 
-                artists_aux = chosen_artists.get(style_url).get("artists")
-                artists_aux.append(artists[option - 1])
-                chosen_artists.update({style_url: {"description": style_description, "artists": artists_aux}})
+                    artists_aux = chosen_artists.get(style_url).get("artists")
+                    artists_aux.append(artists[op - 1])
+                    chosen_artists.update({style_url: {"description": style_description, "artists": artists_aux}})
 
     overwrite_option = None
     for style in chosen_artists:
