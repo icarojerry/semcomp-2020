@@ -1,0 +1,30 @@
+search artista {
+    document artista inherits base_definition {
+        field id type long {
+            indexing: summary
+        }
+        field nome type string {
+           indexing: summary | index | attribute
+           attribute: fast-search
+           stemming: none
+           bolding: on
+        }
+        field visualizacoes type long {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+        field url type uri {
+            indexing: summary
+        }
+        field link type string {
+            indexing: summary
+        }
+        field link_api type string {
+            indexing: summary
+        }
+    }
+
+    fieldset default {
+      fields: nome
+    }
+}

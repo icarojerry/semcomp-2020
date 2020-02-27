@@ -1,0 +1,39 @@
+search musica {
+    document musica inherits base_definition {
+        field id type long {
+            indexing: summary
+        }
+        field titulo type string {
+           indexing: summary | index | attribute
+           attribute: fast-search
+           stemming: none
+           bolding: on
+        }
+        field letra type string {
+            indexing: summary | index
+            summary: dynamic
+        }
+        field visualizacoes type long {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+        field url type uri {
+            indexing: summary
+        }
+        field lingua type string {
+            indexing: summary | attribute
+            stemming: none
+            #normalizing: none
+            attribute: fast-search
+             match {
+                exact
+                exact-terminator: "@@"
+             } #Don't tokenize
+            rank:filter
+        }
+    }
+
+    fieldset default {
+      fields: titulo, letra
+    }
+}

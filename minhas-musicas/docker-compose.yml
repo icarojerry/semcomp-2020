@@ -1,0 +1,39 @@
+version: '3.2'
+
+services:
+
+  vespa:
+    container_name: minhamusica_vespa
+    hostname: vespa
+    image: vespaengine/vespa:7.165.5
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - ./resources/config/vendor/vespa/:/app
+      - ./docker/vespa/deploy-app.sh:/deploy-app.sh
+      - vespa_data:/opt/vespa/var
+      - vespa_logs:/opt/vespa/logs
+
+  # The database
+  mysql:
+    container_name: minhamusica_db
+    network_mode: host
+    restart: unless-stopped
+    privileged: true
+    image: mysql:5.7
+    volumes:
+      - db:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      - "MYSQL_DATABASE=${DB_DATABASE}"
+      - "MYSQL_USER=${DB_USERNAME}"
+      - "MYSQL_ROOT_PASSWORD=${DB_PASSWORD}"
+      - "MYSQL_PASSWORD=${DB_PASSWORD}"
+      - "MYSQL_ALLOW_EMPTY_PASSWORD=1"
+
+volumes:
+  vespa_data:
+  vespa_logs:
+  db:

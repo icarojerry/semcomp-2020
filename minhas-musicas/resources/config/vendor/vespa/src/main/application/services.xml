@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<services version="1.0">
+
+  <!-- Admin -->
+    <admin version="2.0">
+      <adminserver hostalias="vespa"/>
+      <configservers>
+        <configserver hostalias="vespa"/>
+      </configservers>
+      <logserver hostalias="vespa"/>
+    </admin>
+  <!-- END Admin -->
+
+  <!-- Container -->
+    <container id="default" version="1.0">
+      <document-processing/>
+      <document-api/>
+      <components>
+        <component id="com.yahoo.language.opennlp.OpenNlpLinguistics"/>
+      </components>
+      <nodes>
+        <node hostalias="vespa"/>
+      </nodes>
+      <handler id="com.yahoo.search.query.gui.GUIHandler" bundle="container-search-gui:7.0.0">
+        <binding>http://*/querybuilder/*</binding>
+      </handler>
+    </container>
+  <!-- END Container -->
+
+  <!-- Content -->
+    <content version="1.0" id="minhamusica">
+      <redundancy>2</redundancy>
+      <documents>
+        <document type="artista" mode="index"/>
+        <document type="musica" mode="index"/>
+        <document-processing cluster="default"/>
+      </documents>
+      <nodes>
+        <node distribution-key="0" hostalias="vespa"/>
+      </nodes>
+    </content>
+  <!-- END Container -->
+</services>
