@@ -14,7 +14,7 @@ class AddArtistaMusica extends Migration
     public function up()
     {
         Schema::table('musicas', function (Blueprint $table) {
-            $table->bigInteger('artista_id')->unsigned()->nullable();
+            $table->bigInteger('artista_id')->unsigned()->nullable()->index('index_musica_artista');
             $table->foreign('artista_id')->references('id')->on('artistas')->onDelete('cascade');
         });
     }

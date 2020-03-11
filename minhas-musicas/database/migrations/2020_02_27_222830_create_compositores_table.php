@@ -15,7 +15,7 @@ class CreateCompositoresTable extends Migration
     {
         Schema::create('compositores', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('nome')->unique();
+            $table->string('nome')->unique()->index('index_compositor_nome');
             $table->timestamps();
         });
     }

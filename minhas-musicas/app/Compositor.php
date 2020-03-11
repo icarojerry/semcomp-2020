@@ -17,11 +17,6 @@ class Compositor extends Model
         $this->musicas()->create($musica);
     }
 
-    public static function existe($nome)
-    {
-        return Compositor::where('nome', $nome)->count() > 0;
-    }
-
     protected $fillable = [
         'nome'
     ];

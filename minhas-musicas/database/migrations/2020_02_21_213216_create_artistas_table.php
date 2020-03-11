@@ -16,7 +16,7 @@ class CreateArtistasTable extends Migration
         Schema::create('artistas', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('nome')->nullable();
-            $table->string('genero_musical')->nullable();
+            $table->string('genero_musical')->nullable()->index('index_artista_genero_musical');
             $table->integer('visualizacoes')->unsigned()->nullable();
             $table->string('url')->unique();
             $table->timestamps();

@@ -25,9 +25,9 @@ class Musica extends Model implements AbstractDocument
         return Musica::where('url', $url)->count() > 0;
     }
 
-    public function adicionarCompositor($compositor)
+    public function adicionarCompositor(Compositor $compositor)
     {
-        $this->compositores()->create($compositor);
+        $this->compositores()->attach($compositor->id);
     }
 
     public function compositores()

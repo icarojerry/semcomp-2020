@@ -23,7 +23,7 @@ Route::post('receberdados', function (Request $request)
     {
         ;
         $payload = json_decode($request[0]? : $request->getContent(), true);
-        if (!$payload || !$payload['url'])
+        if (!$payload || !isset($payload['url']) || !$payload['url'])
         {
             return response("Arquivo não foi enviado corretamente.", 404);
         }
@@ -43,7 +43,7 @@ Route::post('receberdados', function (Request $request)
         $musicas = $payload['songs'];
         foreach ($musicas as $m)
         {
-            if (\App\Musica::urlExiste($m['url']))
+            if (!isset($m['url']) || \App\Musica::urlExiste($m['url']))
             {
                 continue;
             }
@@ -66,13 +66,14 @@ Route::post('receberdados', function (Request $request)
             $compositores = $m['songwriters']? : [];
             foreach ($compositores as $c)
             {
-                if (\App\Compositor::existe($c))
+                if (!($compositor = \App\Compositor::where('nome', $c)->first()))
                 {
-                    continue;
+                    $compositor = new \App\Compositor();
+                    $compositor->nome = $c;
+                    $compositor->save();
                 }
-                $compositor = new \App\Compositor();
-                $compositor->nome = $c;
-                $musica->adicionarCompositor($compositor->toArray());
+
+                $musica->adicionarCompositor($compositor);
             }
         }
     } catch (\Exception $ex)

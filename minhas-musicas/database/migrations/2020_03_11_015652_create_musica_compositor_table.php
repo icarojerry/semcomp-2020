@@ -15,9 +15,11 @@ class CreateMusicaCompositorTable extends Migration
     {
         Schema::create('musica_compositor', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('musica_id')->unsigned();
-            $table->integer('compositor_id')->unsigned();
+            $table->integer('musica_id')->unsigned()->index('index_musica_compositor_musica');
+            $table->integer('compositor_id')->unsigned()->index('index_musica_compositor_compositor');
             $table->timestamps();
+
+            $table->index(['musica_id', 'compositor_id']);
         });
     }
 
