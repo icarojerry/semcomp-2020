@@ -8,6 +8,17 @@ import json
 import requests
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def send(url, data):
     headers = {
         'X-Requested-With': 'XMLHttpRequest',
@@ -16,9 +27,7 @@ def send(url, data):
 
     response = requests.request('POST', url, headers=headers, json=data)
     if response.status_code != 200:
-        raise Exception(f"Server failed with status code {response.status_code}. {response.text}")
-
-    print(f"{response.text}")
+        raise Exception(f"{bcolors.FAIL}Server failed with status code {response.status_code}. {response.text}{bcolors.ENDC}")
     return True
 
 
@@ -32,16 +41,20 @@ if __name__ == "__main__":
     url = args.destination
 
     try:
-        for filename in os.listdir(songs_path):
+        files = sorted(os.listdir(songs_path))
+        files_quantity = len(files)
+        current = 0
+        for filename in files:
             try:
                 print(f"Preparing to send the file {filename}")
                 with open(os.path.join(songs_path, filename), 'r') as f:
                     json_content = f.read()
+                    current = current + 1
                     response = send(url, json_content)
                     if response:
-                        print(f"{filename} file successfully sent")
+                        print(f"{bcolors.WARNING}{filename} file successfully sent!{bcolors.ENDC}")
             except Exception as e:
-                print(e)
-                continue
+                print(e, file=sys.stderr)
+            print(f"{current}/{files_quantity} are completed")
     except Exception as e:
-        print(f'An error occurred while trying to send the files. {e}')
+        print(f'{bcolors.FAIL}An error occurred while trying to send the files. {e}{bcolors.ENDC}', file=sys.stderr)
