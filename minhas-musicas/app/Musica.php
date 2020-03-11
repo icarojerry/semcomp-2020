@@ -3,7 +3,6 @@
 namespace App;
 
 use Carbon\Carbon;
-use Escavador\Libraries\Vespa\Pessoa;
 use Escavador\Vespa\Interfaces\AbstractDocument;
 use Escavador\Vespa\Models\AbstractChild;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +10,29 @@ use Illuminate\Database\Eloquent\Model;
 class Musica extends Model implements AbstractDocument
 {
 
+    public function artista()
+    {
+        return $this->belongsTo(Artista::class);
+    }
+
+    public static function formatarLetra(array $letra)
+    {
+        return json_encode($letra, JSON_UNESCAPED_UNICODE);
+    }
+
+    public static function urlExiste($url)
+    {
+        return Musica::where('url', $url)->count() > 0;
+    }
+
+    public function adicionarCompositor($compositor)
+    {
+        $this->compositores()->create($compositor);
+    }
+
     public function compositores()
     {
-        return $this->hasMany(Compositor::class, "compositor_id");
+        return $this->belongsToMany(Compositor::class, 'musica_compositor');
     }
 
     //
@@ -80,7 +99,7 @@ class Musica extends Model implements AbstractDocument
     }
 
     protected $fillable = [
-        'artista_id', 'compositor_id', 'titulo', 'letra'
+        'artista_id', 'compositor_id', 'titulo', 'letra', 'url', 'genero_musical', 'lingua', 'visualizacoes'
     ];
 
     protected $table = "musicas";
