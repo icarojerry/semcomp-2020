@@ -13,5 +13,12 @@
                 <button type="submit"><b>buscar</b></button>
             </form>
         </div>
+
+        <hr/>
+        <div class="sub-title">
+            {{ $artistas }} artista{{ $artistas != 1 ? 's' : '' }}
+            | {{ $musicas }} música{{ $musicas != 1 ? 's' : '' }}
+            | {{ $compositores }} compositor{{ $compositores !=1 ? 'es' : '' }}
+        </div>
     </div>
 @endsection

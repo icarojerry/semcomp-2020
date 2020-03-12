@@ -11,7 +11,17 @@ class Artista extends Model
         return Artista::where('url', $url)->count() > 0;
     }
 
-    public function msuicas()
+    public static function getPagina($offset, $limit)
+    {
+        return Artista::query()->offset($offset)->limit($limit)->orderByDesc('visualizacoes')->get();
+    }
+
+    public static function total()
+    {
+        return Artista::all()->count();
+    }
+
+    public function musicas()
     {
         return $this->hasMany(Musica::class);
     }

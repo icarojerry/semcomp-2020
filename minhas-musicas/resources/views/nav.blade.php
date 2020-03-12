@@ -1,4 +1,4 @@
- <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top bg-primary">
+ <nav class="navbar navbar-expand-lg navbar-custom fixed-top bg-sencond">
   <div class="container">
     <a class="navbar-brand" href="{{ url('/') }}">minhasmusicas.com</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">

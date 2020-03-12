@@ -9,21 +9,25 @@ body {
 }
 
 .navbar-custom .navbar-brand {
-  text-transform: uppercase;
   font-size: 1rem;
   letter-spacing: 0.1rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .navbar-custom .navbar-nav .nav-item .nav-link {
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  font-weight: 700;
+  text-transform: lowercase;
+  font-size: 0.9rem;
+  font-weight: 400;
   letter-spacing: 0.1rem;
 }
 
-.navbar-dark .navbar-nav .nav-link {
-    color: #fff;
+.navbar-brand {
+    font-weight: 500;
+    color: #3f4141 !important;
+}
+
+.navbar-nav .nav-link {
+    color: #3f4141 !important;
 }
 
 .card-header {
@@ -71,6 +75,18 @@ div.main-section .bg-circle {
 .bg-primary, .btn-primary {
 	background-color: #3f4141 !important;
 	border-color: #3f4141 !important;
+}
+
+.color-primary {
+    color: #3f4141 !important;
+}
+
+.color-second {
+    color: #eebd65 !important;
+}
+
+.color-second:hover {
+    color: #eaad40 !important;
 }
 
 .btn-primary:hover {
@@ -152,8 +168,8 @@ footer {
 
 .footer {
     background: white;
+    padding-bottom: 0 !important;
 }
-
 
 div.search-container {
     margin: 35px 30px 25px 30px;

@@ -10,6 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 class Musica extends Model implements AbstractDocument
 {
 
+    public static function total()
+    {
+        return Musica::all()->count();
+    }
+
+    public static function getPagina($offset, $limit)
+    {
+        return Musica::query()->offset($offset)->limit($limit)->orderByDesc('visualizacoes')->get();
+    }
+
     public function artista()
     {
         return $this->belongsTo(Artista::class);

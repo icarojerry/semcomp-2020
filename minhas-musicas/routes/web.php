@@ -11,6 +11,15 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'HomePageController@index');
+
+Route::get('/artistas', 'ArtistaController@index');
+//Route::get('/artistas/{artista}', 'ArtistaController@show');
+//Route::get('/artistas/{artista}/musicas/{musica}', 'ArtistaController@show');
+
+Route::get('/musicas', 'MusicaController@index');
+//Route::get('/musicas/{musica}', 'MusicaController@show');
+//Route::get('/musicas/{musica}', 'MusicaController@show');
+//
+//Route::get('/compositores', 'CompositorController@index');
+//Route::get('/compositores/{compositor}', 'CompositorController@show');

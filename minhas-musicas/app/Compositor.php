@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Compositor extends Model
 {
 
+    public static function total()
+    {
+        return Compositor::all()->count();
+    }
+
     public function musicas()
     {
         return $this->belongsToMany(Musica::class, 'musica_compositor');
