@@ -335,6 +335,10 @@ if __name__ == "__main__":
                 tries = tries + 1
 
             print(f"\nMúsicas de {artist_name}")
+            if links is None:
+                print(f"Nenhum link foi encontrado para esse artista. Ignorando.")
+                continue
+
             for link in links:
                 song_name = link["name"]
                 song_link = link["link"]
