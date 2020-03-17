@@ -1,43 +1,35 @@
 @extends('layout')
 
-@section('title', 'Artistas')
+@section('title', 'Compositores')
 
 @section('content')
     <div class="container">
         <table class="table table-striped table-bordered table-hover">
-            @if (!$artistas->count())
+            @if (!$compositores->count())
                 <tr>
                     <th>
-                        <p>Não há artistas cadastrado na base.</p>
+                        <p>Não há compositores cadastrado na base.</p>
                     </th>
                 </tr>
             @else
                 <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Gênero musical</th>
-                    <th>Músicas</th>
-                    <th>Visualizações</th>
+                    <th>Quantidade de Músicas</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody class="text-justify">
-                @foreach ($artistas  as $artista)
+                @foreach ($compositores  as $compositor)
                     <tr>
                         <th scope="row">
-                            {{ $artista->nome }}
+                            {{ $compositor->nome }}
                         </th>
                         <th scope="row">
-                            {{ $artista->genero_musical }}
-                        </th>
-                        <th scope="row">
-                            {{ count($artista->musicas) }}
-                        </th>
-                        <th scope="row">
-                            {{ number_format($artista->visualizacoes, 0, ',', '.') }}
+                            0000
                         </th>
                         <th>
-                            <a class="btn btn-primary" href="{{ url("/artistas/$artista->id") }}">
+                            <a class="btn btn-primary" href="{{ url("/compositor/$compositor->id") }}">
                                 <i class="fa fa-eye"></i> Ver
                             </a>
                         </th>
@@ -48,4 +40,5 @@
         </table>
         {!! $paginador->render() !!}
     </div>
+
 @endsection

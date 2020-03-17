@@ -18,14 +18,15 @@ class MusicaController extends Controller
     {
         $inicioDaRequisicao = Carbon::now();
 
-        $itensPorPagina = 20;
+        $itensPorPagina = 10;
         $paginaAtual = $request->input('pagina')?: 1;
         $offset = ($paginaAtual - 1) * $itensPorPagina;
         $limit = $offset + $itensPorPagina;
 
         $musicas = Musica::getPagina($offset, $limit);
+        $totalMusicas = Musica::total();
 
-        $paginador = new LengthAwarePaginator($musicas, $limit, $itensPorPagina);
+        $paginador = new LengthAwarePaginator($musicas, $totalMusicas, $itensPorPagina);
         $paginador->setPath($request->url());
         $paginador->appends(array('pagina' => $request->input('pagina')));
 

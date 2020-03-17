@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Compositor;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CompositorController extends Controller
 {
@@ -12,9 +14,29 @@ class CompositorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $inicioDaRequisicao = Carbon::now();
+
+        $itensPorPagina = 10;
+        $paginaAtual = $request->input('pagina')?: 1;
+        $offset = ($paginaAtual - 1) * $itensPorPagina;
+        $limit = $offset + $itensPorPagina;
+
+        $compositores = Compositor::getPagina($offset, $limit);
+        $totalCompositores = Compositor::total();
+
+        $paginador = new LengthAwarePaginator($compositores, $totalCompositores, $itensPorPagina);
+        $paginador->setPath($request->url());
+        $paginador->appends(array('pagina' => $request->input('pagina')));
+
+        if($limit != 0 && $paginaAtual > $paginador->lastPage())
+        {
+            abort(404);
+        }
+
+        $tempoExecucao = Carbon::now()->diffInMilliseconds($inicioDaRequisicao) / 1000;
+        return view('compositores.index', compact('compositores'))->with('paginador', $paginador)->with('tempoExecucao', $tempoExecucao);
     }
 
     /**

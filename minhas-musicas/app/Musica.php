@@ -45,10 +45,9 @@ class Musica extends Model implements AbstractDocument
         return $this->belongsToMany(Compositor::class, 'musica_compositor');
     }
 
-    //
-    public function getVespaDocumentId ()
+    public function getVespaDocumentId () : string
     {
-        $this->id;
+        return (string) $this->id;
     }
 
     public function getVespaDocumentFields ()
@@ -64,14 +63,14 @@ class Musica extends Model implements AbstractDocument
         ];
     }
 
-    public static function markAsVespaIndexed($documents, array $indexes)
+    public static function markAsVespaIndexed(array $document_ids)
     {
-        Musica::updateStatusVespa($documents, $indexes, EnumModelStatusVespa::INDEXED);
+        Musica::updateStatusVespa($document_ids, EnumModelStatusVespa::INDEXED);
     }
 
-    public static function markAsVespaNotIndexed($documents, array $indexes)
+    public static function markAsVespaNotIndexed(array $document_ids)
     {
-        Musica::updateStatusVespa($documents, $indexes, EnumModelStatusVespa::NOT_INDEXED);
+        Musica::updateStatusVespa($document_ids, EnumModelStatusVespa::NOT_INDEXED);
     }
 
     public static function instanceByVespaChildResponse (AbstractChild $child) : AbstractDocument
@@ -85,23 +84,23 @@ class Musica extends Model implements AbstractDocument
         return new Musica($id, $titulo, $letra, $url, $visualizacoes);
     }
 
-    public static function getVespaDocumentsToIndex (int $limit)
+    public static function getVespaDocumentIdsToIndex(int $limit)
     {
         // TODO: Implement getVespaDocumentsToIndex() method.
     }
 
-    private static function updateStatusVespa($documents, array $indexes, $statusVespa)
+    public static function getVespaDocumentsToIndex (int $limit, array $document_ids = null)
     {
-        $ids = [];
-        foreach ($indexes as $index)
-        {
-            $doc = $documents[$index];
-            if (!in_array($doc->id, $ids)) {
-                $ids[] = $doc->id;
-            }
-        }
+        // TODO: Implement getVespaDocumentsToIndex() method.
+    }
 
-        Musica::whereIn('id', $ids)
+    private static function updateStatusVespa(array $document_ids, $statusVespa)
+    {
+        if(count($document_ids) == 0)
+        {
+            return;
+        }
+        Musica::whereIn('id', $document_ids)
             ->update([
                 config('vespa.model_columns.status') => $statusVespa,
                 config('vespa.model_columns.date') => Carbon::now()
