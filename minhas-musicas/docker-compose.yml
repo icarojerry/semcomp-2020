@@ -6,9 +6,16 @@ services:
     container_name: minhamusica_vespa
     hostname: vespa
     image: vespaengine/vespa:7.165.5
-    network_mode: host
     privileged: true
     restart: unless-stopped
+    extra_hosts:
+      vespa: 127.0.0.1
+    ports:
+      - "8080:8080"
+      - "19071:19071"
+      - "19116:19116"
+      - "19112:19112"
+      - "9426:9426"
     volumes:
       - ./resources/config/vendor/vespa/:/app
       - ./docker/vespa/deploy-app.sh:/deploy-app.sh
@@ -18,7 +25,6 @@ services:
   # The database
   mysql:
     container_name: minhamusica_db
-    network_mode: host
     restart: unless-stopped
     privileged: true
     image: mysql:5.7

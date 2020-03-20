@@ -1,6 +1,7 @@
 body {
   font-family: 'Muli';
   overflow: hidden;
+  color: #505050;
 }
 
 .navbar-custom {
@@ -38,6 +39,23 @@ body {
 .card-body {
     color: #505050;
 }
+
+.letra {
+    column-count: 4;
+    margin-top: 30px;
+    text-align: justify;
+}
+
+.estrofe {
+    margin-bottom: 20px;
+}
+
+.letra p {
+    color: #505050;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
 
 div.main-section {
   position: relative;

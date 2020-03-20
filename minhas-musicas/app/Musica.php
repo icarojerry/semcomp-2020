@@ -30,6 +30,27 @@ class Musica extends Model implements AbstractDocument
         return json_encode($letra, JSON_UNESCAPED_UNICODE);
     }
 
+    public function letraFormatada()
+    {
+        return json_decode($this->letra, JSON_UNESCAPED_UNICODE);
+    }
+
+    public function letraParaVespa()
+    {
+        $letra = "";
+        foreach ($this->letraFormatada() as $estrofe)
+        {
+            foreach ($estrofe as $verso)
+            {
+                $letra .= "$verso \n ";
+            }
+
+            $letra .= "\n";
+        }
+
+        return $letra;
+    }
+
     public static function urlExiste($url)
     {
         return Musica::where('url', $url)->count() > 0;

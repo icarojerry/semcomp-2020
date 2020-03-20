@@ -20,18 +20,17 @@ class ArtistaController extends Controller
         $inicioDaRequisicao = Carbon::now();
 
         $itensPorPagina = 10;
-        $paginaAtual = $request->input('pagina')?: 1;
+        $paginaAtual = $request->input('page')?: 1;
         $offset = ($paginaAtual - 1) * $itensPorPagina;
-        $limit = $offset + $itensPorPagina;
 
-        $artistas = Artista::getPagina($offset, $limit);
+        $artistas = Artista::getPagina($offset, $itensPorPagina);
         $totalArtistas = Artista::total();
 
         $paginador = new LengthAwarePaginator($artistas, $totalArtistas, $itensPorPagina);
         $paginador->setPath($request->url());
-        $paginador->appends(array('pagina' => $request->input('pagina')));
+        $paginador->appends(array('page' => $paginaAtual));
 
-        if($limit != 0 && $paginaAtual > $paginador->lastPage())
+        if($itensPorPagina != 0 && $paginaAtual > $paginador->lastPage())
         {
             abort(404);
         }

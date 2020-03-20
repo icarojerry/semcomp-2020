@@ -19,18 +19,17 @@ class MusicaController extends Controller
         $inicioDaRequisicao = Carbon::now();
 
         $itensPorPagina = 10;
-        $paginaAtual = $request->input('pagina')?: 1;
+        $paginaAtual = $request->input('page')?: 1;
         $offset = ($paginaAtual - 1) * $itensPorPagina;
-        $limit = $offset + $itensPorPagina;
 
-        $musicas = Musica::getPagina($offset, $limit);
+        $musicas = Musica::getPagina($offset, $itensPorPagina);
         $totalMusicas = Musica::total();
 
         $paginador = new LengthAwarePaginator($musicas, $totalMusicas, $itensPorPagina);
         $paginador->setPath($request->url());
-        $paginador->appends(array('pagina' => $request->input('pagina')));
+        $paginador->appends(array('page' => $paginaAtual));
 
-        if($limit != 0 && $paginaAtual > $paginador->lastPage())
+        if($itensPorPagina != 0 && $paginaAtual > $paginador->lastPage())
         {
             abort(404);
         }
@@ -68,7 +67,10 @@ class MusicaController extends Controller
      */
     public function show(Musica $musica)
     {
-        //
+        $inicioDaRequisicao = Carbon::now();
+
+        $tempoExecucao = Carbon::now()->diffInMilliseconds($inicioDaRequisicao) / 1000;
+        return view('musicas.show', compact('musica'))->with('tempoExecucao', $tempoExecucao);
     }
 
     /**

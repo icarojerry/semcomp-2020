@@ -19,18 +19,17 @@ class CompositorController extends Controller
         $inicioDaRequisicao = Carbon::now();
 
         $itensPorPagina = 10;
-        $paginaAtual = $request->input('pagina')?: 1;
+        $paginaAtual = $request->input('page')?: 1;
         $offset = ($paginaAtual - 1) * $itensPorPagina;
-        $limit = $offset + $itensPorPagina;
 
-        $compositores = Compositor::getPagina($offset, $limit);
+        $compositores = Compositor::getPagina($offset, $itensPorPagina);
         $totalCompositores = Compositor::total();
 
         $paginador = new LengthAwarePaginator($compositores, $totalCompositores, $itensPorPagina);
         $paginador->setPath($request->url());
-        $paginador->appends(array('pagina' => $request->input('pagina')));
+        $paginador->appends(array('page' => $paginaAtual));
 
-        if($limit != 0 && $paginaAtual > $paginador->lastPage())
+        if($itensPorPagina != 0 && $paginaAtual > $paginador->lastPage())
         {
             abort(404);
         }

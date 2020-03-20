@@ -65,7 +65,11 @@ Route::post('receberdados', function (Request $request) {
             $compositores = $m['songwriters']? : [];
             foreach ($compositores as $c)
             {
-                if (!($compositor = \App\Compositor::where('nome', $c)->first()))
+                $nome = str_replace("°", "", $c);
+                $nome = str_replace("ª", "", $nome);
+                $nome = str_replace("º", "", $nome);
+                $nome = preg_replace('/[#$%^&*()+=\-\[\]\';,.\/{}|":<>?~\\\\]/', '${1} ', $nome);
+                if (!($compositor = \App\Compositor::where('nome', $nome)->first()))
                 {
                     $compositor = new \App\Compositor();
                     $compositor->nome = $c;
